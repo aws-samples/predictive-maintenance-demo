@@ -28,7 +28,6 @@ from awsiot.greengrasscoreipc.model import UpdateThingShadowRequest
 from awsiot.greengrasscoreipc.model import ListNamedShadowsForThingRequest
 
 
-# get from the environment variable, defined in green-app.json
 GREENGRASS_GROUP_ID = os.environ["GREENGRASS_GROUP_ID"]
 GREENGRASS_GROUP_NAME = os.environ["GREENGRASS_GROUP_NAME"]
 GREENGRASS_THING_NAME = os.environ["GREENGRASS_THING_NAME"]
@@ -54,11 +53,9 @@ ipc_client_v1 = awsiot.greengrasscoreipc.connect()
 
 def sample_list_named_shadows_for_thing_request(thingName):
     try:
-        # create the ListNamedShadowsForThingRequest request
         list_named_shadows_for_thing_request = ListNamedShadowsForThingRequest()
         list_named_shadows_for_thing_request.thing_name = thingName
 
-        # retrieve the ListNamedShadowsForThingRequest response after sending the request to the IPC server
         op = ipc_client_v1.new_list_named_shadows_for_thing()
         op.activate(list_named_shadows_for_thing_request)
         fut = op.get_response()
@@ -73,13 +70,11 @@ def sample_list_named_shadows_for_thing_request(thingName):
 
 def sample_update_thing_shadow_request(thingName, shadowName, payload):
     try:
-        # create the UpdateThingShadow request
         update_thing_shadow_request = UpdateThingShadowRequest()
         update_thing_shadow_request.thing_name = thingName
         update_thing_shadow_request.shadow_name = shadowName
         update_thing_shadow_request.payload = payload
 
-        # retrieve the UpdateThingShadow response after sending the request to the IPC server
         op = ipc_client_v1.new_update_thing_shadow()
         op.activate(update_thing_shadow_request)
         fut = op.get_response()
@@ -94,8 +89,7 @@ def sample_update_thing_shadow_request(thingName, shadowName, payload):
 def initialise_shadow():
     try:
         list = sample_list_named_shadows_for_thing_request(GREENGRASS_THING_NAME)
-        # if GREENGRASS_THING_NAME not in list:
-        if True:
+        if GREENGRASS_THING_NAME not in list:
             sample_update_thing_shadow_request(
                 GREENGRASS_THING_NAME,
                 GREENGRASS_THING_NAME,
@@ -107,12 +101,10 @@ def initialise_shadow():
 
 def sample_get_thing_shadow_request(thingName, shadowName):
     try:
-        # create the GetThingShadow request
         get_thing_shadow_request = GetThingShadowRequest()
         get_thing_shadow_request.thing_name = thingName
         get_thing_shadow_request.shadow_name = shadowName
 
-        # retrieve the GetThingShadow response after sending the request to the IPC server
         op = ipc_client_v1.new_get_thing_shadow()
         op.activate(get_thing_shadow_request)
         fut = op.get_response()
@@ -124,7 +116,6 @@ def sample_get_thing_shadow_request(thingName, shadowName):
         logger.error("Invalid arguments error: %s", e)
 
 
-# registers to read from the vibration sensor
 sensor_registers = {
     "zrmsvelocity": {"address": 5201, "number_of_decimals": 3, "signed": False},
     "temperature": {"address": 5203, "number_of_decimals": 2, "signed": True},
@@ -143,15 +134,10 @@ sensor_registers = {
     "xhfrmsacceleration": {"address": 5221, "number_of_decimals": 3, "signed": False},
 }
 
-# set logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
-# Modbus for vibration sensor connection
 instrument = minimalmodbus.Instrument(MODBUS_DEVICE, MODBUS_SLAVE_ADDRESS)
-
-
-### MQTT messaging
 
 
 def publish(topic, message):
@@ -159,9 +145,6 @@ def publish(topic, message):
         ggclient.publish_to_iot_core(topic_name=topic, qos="1", payload=message)
     except Exception as e:
         logger.error("Failed to publish message: " + repr(e))
-
-
-### Shadow Operations
 
 
 def get_shadow_reported_max_vibration():
@@ -199,14 +182,10 @@ def get_shadow_reported_status():
         return
 
 
-### Hardware Operations
-
-
 def read_registers():
     start = time.process_time()
     data = {}
 
-    # read registers one by one
     for k, v in sensor_registers.items():
         try:
             reading = instrument.read_register(
@@ -223,9 +202,6 @@ def read_registers():
         "read_registers duration: " + str(round(time.process_time() - start, 3)) + "s"
     )
     return data
-
-
-### Collect Data Thread
 
 
 def collect_data():
@@ -251,13 +227,10 @@ def collect_data():
             publish(RAW_DATA_TOPIC, json.dumps(data))
 
         elif status == "train":
-            # additional field for training
             data["max_vibration"] = get_shadow_reported_max_vibration()
             data["motor_speed"] = get_shadow_reported_motor_speed()
-            # additional field for identifying the device in the cloud
             data["GREENGRASS_GROUP_ID"] = GREENGRASS_GROUP_ID
 
-            # append into the training stream
             try:
                 sequence_number = streamclient.append_message(
                     stream_name=TRAINING_STREAM_NAME,
@@ -273,9 +246,6 @@ def collect_data():
         logger.error("Failed while collecting data: " + repr(e))
 
     Timer(MODBUS_READING_INTERVAL, collect_data).start()
-
-
-### Main Function
 
 
 def main():
