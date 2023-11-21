@@ -47,11 +47,8 @@ TIMEOUT = 10
 
 initial_state = """{"state": {"reported": {"max-vibration": 50,"motor-speed": 35, "vibration-status": "run"}}}"""
 
-# Create GG and Stream Manager clients
 ggclient = GreengrassCoreIPCClientV2()
-# streamclient = StreamManagerClient()
-
-# set up IPC client to connect to the IPC server
+streamclient = StreamManagerClient()
 ipc_client_v1 = awsiot.greengrasscoreipc.connect()
 
 
@@ -76,9 +73,6 @@ def sample_list_named_shadows_for_thing_request(thingName):
 
 def sample_update_thing_shadow_request(thingName, shadowName, payload):
     try:
-        # set up IPC client to connect to the IPC server
-        ipc_client = awsiot.greengrasscoreipc.connect()
-
         # create the UpdateThingShadow request
         update_thing_shadow_request = UpdateThingShadowRequest()
         update_thing_shadow_request.thing_name = thingName
@@ -86,7 +80,7 @@ def sample_update_thing_shadow_request(thingName, shadowName, payload):
         update_thing_shadow_request.payload = payload
 
         # retrieve the UpdateThingShadow response after sending the request to the IPC server
-        op = ipc_client.new_update_thing_shadow()
+        op = ipc_client_v1.new_update_thing_shadow()
         op.activate(update_thing_shadow_request)
         fut = op.get_response()
 
@@ -242,16 +236,16 @@ def collect_data():
         data = read_registers()
 
         if status == "run":
-            # try:
-            #     sequence_number = streamclient.append_message(
-            #         stream_name=PREDICTION_STREAM_NAME,
-            #         data=json.dumps(data).encode("utf-8"),
-            #     )
-            #     logger.info(
-            #         "Appended message {} into Prediction Stream".format(sequence_number)
-            #     )
-            # except Exception as e:
-            #     logger.error("Failed to append message: " + repr(e))
+            try:
+                sequence_number = streamclient.append_message(
+                    stream_name=PREDICTION_STREAM_NAME,
+                    data=json.dumps(data).encode("utf-8"),
+                )
+                logger.info(
+                    "Appended message {} into Prediction Stream".format(sequence_number)
+                )
+            except Exception as e:
+                logger.error("Failed to append message: " + repr(e))
 
             print("Publishing raw data to " + RAW_DATA_TOPIC)
             publish(RAW_DATA_TOPIC, json.dumps(data))
@@ -264,16 +258,16 @@ def collect_data():
             data["GREENGRASS_GROUP_ID"] = GREENGRASS_GROUP_ID
 
             # append into the training stream
-            # try:
-            #     sequence_number = streamclient.append_message(
-            #         stream_name=TRAINING_STREAM_NAME,
-            #         data=json.dumps(data).encode("utf-8"),
-            #     )
-            #     logger.info(
-            #         "Appended message {} into Training Stream".format(sequence_number)
-            #     )
-            # except Exception as e:
-            #     logger.error("Failed to append message: " + repr(e))
+            try:
+                sequence_number = streamclient.append_message(
+                    stream_name=TRAINING_STREAM_NAME,
+                    data=json.dumps(data).encode("utf-8"),
+                )
+                logger.info(
+                    "Appended message {} into Training Stream".format(sequence_number)
+                )
+            except Exception as e:
+                logger.error("Failed to append message: " + repr(e))
 
     except Exception as e:
         logger.error("Failed while collecting data: " + repr(e))
@@ -285,57 +279,57 @@ def collect_data():
 
 
 def main():
-    # try:
-    #     # Try deleting the stream (if it exists) so that we have a fresh start
-    #     try:
-    #         streamclient.delete_message_stream(stream_name=TRAINING_STREAM_NAME)
-    #     except ResourceNotFoundException:
-    #         pass
+    try:
+        # Try deleting the stream (if it exists) so that we have a fresh start
+        try:
+            streamclient.delete_message_stream(stream_name=TRAINING_STREAM_NAME)
+        except ResourceNotFoundException:
+            pass
 
-    #     exports = ExportDefinition(
-    #         iot_analytics=[
-    #             IoTAnalyticsConfig(
-    #                 identifier="IotAnalyticsExport",
-    #                 iot_channel=IOT_ANALYTICS_CHANNEL_NAME,
-    #             )
-    #         ],
-    #         kinesis=[
-    #             KinesisConfig(
-    #                 identifier="KinesisExport", kinesis_stream_name=TRAINING_STREAM_NAME
-    #             )
-    #         ],
-    #     )
-    #     streamclient.create_message_stream(
-    #         MessageStreamDefinition(
-    #             name=TRAINING_STREAM_NAME,
-    #             strategy_on_full=StrategyOnFull.OverwriteOldestData,
-    #             # persistence=Persistence.Memory,
-    #             export_definition=exports,
-    #         )
-    #     )
-    # except asyncio.TimeoutError:
-    #     logger.exception("Timed out while executing")
-    # except Exception as e:
-    #     logger.exception("Exception while creating training stream" + repr(e))
+        exports = ExportDefinition(
+            iot_analytics=[
+                IoTAnalyticsConfig(
+                    identifier="IotAnalyticsExport",
+                    iot_channel=IOT_ANALYTICS_CHANNEL_NAME,
+                )
+            ],
+            kinesis=[
+                KinesisConfig(
+                    identifier="KinesisExport", kinesis_stream_name=TRAINING_STREAM_NAME
+                )
+            ],
+        )
+        streamclient.create_message_stream(
+            MessageStreamDefinition(
+                name=TRAINING_STREAM_NAME,
+                strategy_on_full=StrategyOnFull.OverwriteOldestData,
+                # persistence=Persistence.Memory,
+                export_definition=exports,
+            )
+        )
+    except asyncio.TimeoutError:
+        logger.exception("Timed out while executing")
+    except Exception as e:
+        logger.exception("Exception while creating training stream" + repr(e))
 
-    # try:
-    #     # Try deleting the stream (if it exists) so that we have a fresh start
-    #     try:
-    #         streamclient.delete_message_stream(stream_name=PREDICTION_STREAM_NAME)
-    #     except ResourceNotFoundException:
-    #         pass
+    try:
+        # Try deleting the stream (if it exists) so that we have a fresh start
+        try:
+            streamclient.delete_message_stream(stream_name=PREDICTION_STREAM_NAME)
+        except ResourceNotFoundException:
+            pass
 
-    #     streamclient.create_message_stream(
-    #         MessageStreamDefinition(
-    #             name=PREDICTION_STREAM_NAME,
-    #             strategy_on_full=StrategyOnFull.OverwriteOldestData,
-    #             # persistence=Persistence.Memory
-    #         )
-    #     )
-    # except asyncio.TimeoutError:
-    #     logger.exception("Timed out while executing")
-    # except Exception as e:
-    #     logger.exception("Exception while creating prediction stream" + repr(e))
+        streamclient.create_message_stream(
+            MessageStreamDefinition(
+                name=PREDICTION_STREAM_NAME,
+                strategy_on_full=StrategyOnFull.OverwriteOldestData,
+                # persistence=Persistence.Memory
+            )
+        )
+    except asyncio.TimeoutError:
+        logger.exception("Timed out while executing")
+    except Exception as e:
+        logger.exception("Exception while creating prediction stream" + repr(e))
 
     try:
         initialise_shadow()
