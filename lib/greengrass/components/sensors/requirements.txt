@@ -1,0 +1,4 @@
+wheel
+awsiotsdk
+stream_manager
+minimalmodbus

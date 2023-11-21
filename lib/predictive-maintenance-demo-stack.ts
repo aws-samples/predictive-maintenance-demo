@@ -1,16 +1,26 @@
-import * as cdk from 'aws-cdk-lib';
+import { Stack, StackProps, aws_iot, CfnOutput, Names } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { GreenGrassStack } from './greengrass/greengrass-stack';
 
-export class PredictiveMaintenanceDemoStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+export class PredictiveMaintenanceDemoStack extends Stack {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const thingGroup = new aws_iot.CfnThingGroup(this, 'DemoThingGroup', {
+      thingGroupName: Names.uniqueResourceName(this, {}) + '-Group',
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'PredictiveMaintenanceDemoQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const thing = new aws_iot.CfnThing(this, 'DemoThing', {
+      thingName: Names.uniqueResourceName(this, {}) + '-Thing',
+    });
+
+    const { subscribeCommand } = new GreenGrassStack(this, 'GreenGrassStack', {
+      thing,
+      thingGroup,
+    });
+
+    new CfnOutput(this, 'GreenGrassSubscribeCommand', {
+      value: subscribeCommand,
+    });
   }
 }
