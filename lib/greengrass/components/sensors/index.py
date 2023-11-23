@@ -1,7 +1,5 @@
 import os
-import sys
 import time
-import uuid
 import json
 import logging
 import asyncio
@@ -10,11 +8,11 @@ from threading import Timer
 import minimalmodbus
 
 from awsiot.greengrasscoreipc.clientv2 import GreengrassCoreIPCClientV2
+
 from stream_manager import (
     ExportDefinition,
     KinesisConfig,
     MessageStreamDefinition,
-    ReadMessagesOptions,
     ResourceNotFoundException,
     StrategyOnFull,
     StreamManagerClient,
@@ -22,7 +20,6 @@ from stream_manager import (
 )
 
 import awsiot.greengrasscoreipc
-import awsiot.greengrasscoreipc.client as client
 from awsiot.greengrasscoreipc.model import GetThingShadowRequest
 from awsiot.greengrasscoreipc.model import UpdateThingShadowRequest
 from awsiot.greengrasscoreipc.model import ListNamedShadowsForThingRequest
@@ -32,7 +29,8 @@ GREENGRASS_GROUP_ID = os.environ["GREENGRASS_GROUP_ID"]
 GREENGRASS_GROUP_NAME = os.environ["GREENGRASS_GROUP_NAME"]
 GREENGRASS_THING_NAME = os.environ["GREENGRASS_THING_NAME"]
 DEBUG_TOPIC = "debug/ReadSensor/" + GREENGRASS_GROUP_ID
-RAW_DATA_TOPIC = "predmaint/device-health/factory-luxembourg-grinder/rul"  # "predmaint/device-health/" + GREENGRASS_GROUP_ID + "/raw"
+# RAW_DATA_TOPIC = "predmaint/device-health/factory-luxembourg-grinder/rul"  # "predmaint/device-health/" + GREENGRASS_GROUP_ID + "/raw"
+RAW_DATA_TOPIC = "predmaint/device-health/" + GREENGRASS_THING_NAME
 
 PREDICTION_STREAM_NAME = os.environ["PREDICTION_STREAM_NAME"]
 TRAINING_STREAM_NAME = os.environ["TRAINING_STREAM_NAME"]
@@ -175,8 +173,7 @@ def get_shadow_reported_status():
     )
     shadow = json.loads(thing_shadow.decode("utf-8"))
     try:
-        status = shadow["state"]["reported"]["vibration-status"]
-        return status
+        return shadow["state"]["reported"]["vibration-status"]
     except Exception as e:
         logger.error("Failed to get shadow: " + repr(e))
         return

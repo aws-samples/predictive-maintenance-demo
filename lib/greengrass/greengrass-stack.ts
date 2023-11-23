@@ -22,31 +22,67 @@ export class GreenGrassStack extends NestedStack {
       assumedBy: new aws_iam.ServicePrincipal('credentials.iot.amazonaws.com'),
       managedPolicies: [
         aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
-        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'),
-        aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
-          'service-role/AWSAppRunnerServicePolicyForECRAccess'
-        ),
-        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonKinesisVideoStreamsFullAccess'),
+        // aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'),
+        // aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+        //   'service-role/AWSAppRunnerServicePolicyForECRAccess'
+        // ),
       ],
     });
 
+    const serviceRole = new aws_iam.Role(this, 'GreengrassServiceRole', {
+      assumedBy: new aws_iam.ServicePrincipal('greengrass.amazonaws.com'),
+      managedPolicies: [aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
+    });
+    // const serviceRole = new aws_iam.CfnServiceLinkedRole(this, 'GreengrassServiceRole', {
+    //   awsServiceName: 'greengrass.amazonaws.com',
+    // });
+
     const policy = new aws_iam.ManagedPolicy(this, 'GreenGrassPolicy', {
       managedPolicyName: role.roleName + 'Access',
-      roles: [role],
+      roles: [role, serviceRole],
       statements: [
         new aws_iam.PolicyStatement({
           actions: [
-            'logs:CreateLogGroup',
-            'logs:CreateLogStream',
-            'logs:PutLogEvents',
-            'logs:DescribeLogStreams',
-            'iot:GetThingShadow',
-            'iot:UpdateThingShadow',
-            'iot:DeleteThingShadow',
+            '*',
+            // 'logs:CreateLogGroup',
+            // 'logs:CreateLogStream',
+            // 'logs:PutLogEvents',
+            // 'logs:DescribeLogStreams',
+            // 'iot:GetThingShadow',
+            // 'iot:UpdateThingShadow',
+            // 'iot:DeleteThingShadow',
           ],
           resources: ['*'],
         }),
       ],
+    });
+
+    const iotPolicy = new aws_iot.CfnPolicy(this, 'IotPolicy', {
+      policyName: role.roleName + 'Access',
+      policyDocument: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: ['*'],
+            Resource: '*',
+          },
+        ],
+      },
+    });
+
+    const rolePolicy = new aws_iot.CfnPolicy(this, 'RolePolicy', {
+      policyName: 'GreengrassTESCertificatePolicy' + role.roleName + 'Alias',
+      policyDocument: {
+        Version: '2012-10-17',
+        Statement: [
+          {
+            Effect: 'Allow',
+            Action: ['*'],
+            Resource: '*',
+          },
+        ],
+      },
     });
 
     const roleAlias = new aws_iot.CfnRoleAlias(this, 'RoleAliasName', {
@@ -54,18 +90,28 @@ export class GreenGrassStack extends NestedStack {
       roleArn: role.roleArn,
     });
 
-    const { assetHash, s3ObjectKey, s3ObjectUrl } = new aws_s3_assets.Asset(this, 'SensorAsset', {
+    const roleAlias2 = new aws_iot.CfnRoleAlias(this, 'RoleAliasName2', {
+      roleAlias: 'GreengrassTESCertificatePolicy' + role.roleName + 'Alias',
+      roleArn: role.roleArn,
+    });
+
+    const sensorAsset = new aws_s3_assets.Asset(this, 'SensorAsset', {
       path: 'lib/greengrass/components/sensors',
     });
-    const assetFolder = s3ObjectKey.replace('.zip', '');
+    const sensorAssetFolder = sensorAsset.s3ObjectKey.replace('.zip', '');
+
+    const predictAsset = new aws_s3_assets.Asset(this, 'PredictAsset', {
+      path: 'lib/greengrass/components/predict',
+    });
+    const predictAssetFolder = predictAsset.s3ObjectKey.replace('.zip', '');
 
     const componentVersions = {
-      sensors: new aws_greengrassv2.CfnComponentVersion(this, 'SensorsComponentVersion', {
+      predict: new aws_greengrassv2.CfnComponentVersion(this, 'PredictComponentVersion', {
         inlineRecipe: JSON.stringify({
           RecipeFormatVersion: '2020-01-25',
-          ComponentName: 'sensors',
+          ComponentName: 'predict',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.46',
+          ComponentVersion: '1.0.1',
           Manifests: [
             {
               Platform: {
@@ -73,7 +119,46 @@ export class GreenGrassStack extends NestedStack {
               },
               Artifacts: [
                 {
-                  URI: s3ObjectUrl,
+                  URI: predictAsset.s3ObjectUrl,
+                  Unarchive: 'ZIP',
+                },
+              ],
+              Lifecycle: {
+                Setenv: {
+                  GREENGRASS_GROUP_ID: props.thingGroup.attrId,
+                  GREENGRASS_GROUP_NAME: props.thingGroup.thingGroupName,
+                  GREENGRASS_THING_NAME: props.thing.thingName,
+                  PREDICTION_STREAM_NAME: 'LocalRawData',
+                },
+                // RequiresPrivilege: true,
+                // install: 'apt-get update\napt-get install python3.7',
+                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && pip3 install --break-system-packages -r requirements.txt`,
+                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && python3 -m venv ./.venv && source .venv/bin/activate && pip3 install -r requirements.txt`,
+                // install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && python3 -m venv venv && . venv/bin/activate && pip3 install wheel setuptools awscrt && pip3 install -r requirements.txt`,
+                // install: `echo '###### installing' && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && python3 -m venv venv && ls && . venv/bin/activate`,
+                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* .`,
+                // run: `echo '###### running' && cd ${predictAssetFolder} && . venv/bin/activate && python3 index.py`,
+                install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder}`,
+                run: `echo '###### running' && whoami && cd ${predictAssetFolder} && python3 index.py`,
+              },
+            },
+          ],
+        }),
+      }),
+      sensors: new aws_greengrassv2.CfnComponentVersion(this, 'SensorsComponentVersion', {
+        inlineRecipe: JSON.stringify({
+          RecipeFormatVersion: '2020-01-25',
+          ComponentName: 'sensors',
+          ComponentPublisher: 'Amazon Web Services',
+          ComponentVersion: '1.0.6',
+          Manifests: [
+            {
+              Platform: {
+                os: 'linux',
+              },
+              Artifacts: [
+                {
+                  URI: sensorAsset.s3ObjectUrl,
                   Unarchive: 'ZIP',
                 },
               ],
@@ -89,7 +174,7 @@ export class GreenGrassStack extends NestedStack {
                   MODBUS_SLAVE_ADDRESS: '1',
                   MODBUS_READING_INTERVAL: '1',
                 },
-                RequiresPrivilege: true,
+                // RequiresPrivilege: true,
                 // install: 'apt-get update\napt-get install python3.7',
                 // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && pip3 install --break-system-packages -r requirements.txt`,
                 // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && python3 -m venv ./.venv && source .venv/bin/activate && pip3 install -r requirements.txt`,
@@ -97,8 +182,8 @@ export class GreenGrassStack extends NestedStack {
                 // install: `echo '###### installing' && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && python3 -m venv venv && ls && . venv/bin/activate`,
                 // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* .`,
                 // run: `echo '###### running' && cd ${assetFolder} && . venv/bin/activate && python3 index.py`,
-                install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder}`,
-                run: `echo '###### running' && whoami && cd ${assetFolder} && python3 index.py`,
+                install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${sensorAssetFolder}`,
+                run: `echo '###### running' && whoami && cd ${sensorAssetFolder} && python3 index.py`,
               },
             },
           ],
@@ -110,31 +195,84 @@ export class GreenGrassStack extends NestedStack {
       'aws.greengrass.Nucleus': {
         componentVersion: '2.12.0',
       },
-      'aws.greengrass.StreamManager': {
-        componentVersion: '2.1.11',
-      },
       'aws.greengrass.TokenExchangeService': {
         componentVersion: '2.0.3',
       },
+      // 'aws.greengrass.Cli': {
+      //   componentVersion: '2.12.0',
+      // },
+      // 'aws.greengrass.clientdevices.mqtt.Moquette': {
+      //   componentVersion: '2.3.5',
+      // },
+      // 'aws.greengrass.clientdevices.mqtt.EMQX': {
+      //   componentVersion: '2.0.0',
+      // },
+      'aws.greengrass.StreamManager': {
+        componentVersion: '2.1.11',
+      },
       'aws.greengrass.clientdevices.Auth': {
         componentVersion: '2.4.4',
+        configurationUpdate: {
+          merge: JSON.stringify({
+            deviceGroups: {
+              formatVersion: '2021-03-05',
+              definitions: {
+                MyPermissiveDeviceGroup: {
+                  selectionRule: 'thingName: *',
+                  policyName: 'MyPermissivePolicy',
+                },
+              },
+              policies: {
+                MyPermissivePolicy: {
+                  AllowAll: {
+                    statementDescription: 'Allow client devices to perform all actions.',
+                    operations: ['*'],
+                    resources: ['*'],
+                  },
+                },
+              },
+            },
+          }),
+        },
       },
       'aws.greengrass.clientdevices.mqtt.Bridge': {
         componentVersion: '2.3.0',
         configurationUpdate: {
           merge: JSON.stringify({
-            mqttTopicMapping: {
-              ShadowsLocalMqttToPubsub: {
-                topic: `$aws/things/${props.thing.thingName}/shadow/#`,
-                source: 'LocalMqtt',
-                target: 'Pubsub',
-              },
-              ShadowsPubsubToLocalMqtt: {
-                topic: `$aws/things/${props.thing.thingName}/shadow/#`,
-                source: 'Pubsub',
-                target: 'LocalMqtt',
-              },
-            },
+            // mqttTopicMapping: {
+            //   ClientDeviceHelloWorld: {
+            //     topic: 'clients/+/hello/world',
+            //     source: 'LocalMqtt',
+            //     target: 'IotCore',
+            //   },
+            //   ClientDeviceEvents: {
+            //     topic: 'clients/+/detections',
+            //     targetTopicPrefix: 'events/input/',
+            //     source: 'LocalMqtt',
+            //     target: 'Pubsub',
+            //   },
+            //   ClientDeviceCloudStatusUpdate: {
+            //     topic: 'clients/+/status',
+            //     targetTopicPrefix: '$aws/rules/StatusUpdateRule/',
+            //     source: 'LocalMqtt',
+            //     target: 'IotCore',
+            //   },
+            // },
+            // mqttTopicMapping: {
+            //   ClientDeviceHelloWorld: {
+            //     topic: 'clients/+/hello/world',
+            //     source: 'LocalMqtt',
+            //     target: 'IotCore',
+            //   },
+            // },
+            // mqtt5RouteOptions: {
+            //   ClientDeviceHelloWorld: {
+            //     retainAsPublished: true,
+            //   },
+            // },
+            // mqtt: {
+            //   version: 'mqtt5',
+            // },
           }),
         },
       },
@@ -142,18 +280,17 @@ export class GreenGrassStack extends NestedStack {
         componentVersion: '2.3.5',
         configurationUpdate: {
           merge: JSON.stringify({
+            strategy: {
+              type: 'periodic',
+              delay: 300,
+            },
             synchronize: {
-              coreThing: {
-                classic: false,
-                namedShadows: [props.thing.thingName],
-              },
-              shadowDocuments: [
-                {
+              shadowDocumentsMap: {
+                [`${props.thing.thingName}`]: {
                   classic: false,
-                  thingName: props.thing.thingName,
                   namedShadows: [props.thing.thingName],
                 },
-              ],
+              },
               direction: 'betweenDeviceAndCloud',
             },
             rateLimits: {
@@ -166,6 +303,7 @@ export class GreenGrassStack extends NestedStack {
         },
       },
     };
+
     for (const [name, component] of Object.entries(componentVersions)) {
       components[name] = {
         componentVersion: component.attrComponentVersion,
@@ -206,6 +344,15 @@ export class GreenGrassStack extends NestedStack {
       components,
     });
 
-    this.subscribeCommand = `sudo -E java -Droot="/greengrass/v2" -Dlog.store=FILE -jar ./GreengrassInstaller/lib/Greengrass.jar --aws-region ${this.region} --thing-name ${props.thing.thingName} --thing-group-name ${props.thingGroup.thingGroupName} --component-default-user ggc_user:ggc_group --provision true --tes-role-name ${role.roleName} --tes-role-alias-name ${roleAlias.roleAlias} --setup-system-service true --deploy-dev-tools true`;
+    this.subscribeCommand = `sudo -E java -Droot="/greengrass/v2" -Dlog.store=FILE -jar ./GreengrassInstaller/lib/Greengrass.jar --aws-region ${
+      this.region
+    } --thing-name ${props.thing.thingName} --thing-group-name ${
+      props.thingGroup.thingGroupName
+    } --component-default-user ggc_user:ggc_group --provision true --thing-policy-name ${
+      iotPolicy.policyName
+    } --tes-role-name ${role.roleName} --tes-role-alias-name ${
+      role.roleName + 'Alias'
+      // roleAlias.roleAlias
+    } --setup-system-service true --deploy-dev-tools true`;
   }
 }
