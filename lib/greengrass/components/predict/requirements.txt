@@ -1,3 +1,5 @@
+awsiotsdk
+stream_manager
 tensorflow
 numpy
 keras

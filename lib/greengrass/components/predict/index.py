@@ -54,7 +54,7 @@ PREDICTION_TOPIC = "prediction/" + GREENGRASS_THING_NAME
 
 PREDICTION_STREAM_NAME = os.environ["PREDICTION_STREAM_NAME"]
 
-MODEL_FILE = "model/LSTM.h5"
+MODEL_FILE = os.path.join(os.path.dirname(__file__), "model/LSTM.h5")
 
 TIMEOUT = 10
 

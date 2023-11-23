@@ -111,7 +111,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'predict',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.1',
+          ComponentVersion: '1.0.10',
           Manifests: [
             {
               Platform: {
@@ -130,16 +130,8 @@ export class GreenGrassStack extends NestedStack {
                   GREENGRASS_THING_NAME: props.thing.thingName,
                   PREDICTION_STREAM_NAME: 'LocalRawData',
                 },
-                // RequiresPrivilege: true,
-                // install: 'apt-get update\napt-get install python3.7',
-                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && pip3 install --break-system-packages -r requirements.txt`,
-                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && python3 -m venv ./.venv && source .venv/bin/activate && pip3 install -r requirements.txt`,
-                // install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && python3 -m venv venv && . venv/bin/activate && pip3 install wheel setuptools awscrt && pip3 install -r requirements.txt`,
-                // install: `echo '###### installing' && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder} && python3 -m venv venv && ls && . venv/bin/activate`,
-                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* .`,
-                // run: `echo '###### running' && cd ${predictAssetFolder} && . venv/bin/activate && python3 index.py`,
-                install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${predictAssetFolder}`,
-                run: `echo '###### running' && whoami && cd ${predictAssetFolder} && python3 index.py`,
+                install: `echo '###### installing' && python3 -m venv venv && . venv/bin/activate && pip install -r {artifacts:decompressedPath}/${predictAssetFolder}/requirements.txt`,
+                run: `echo '###### running' && . venv/bin/activate && python3 {artifacts:decompressedPath}/${predictAssetFolder}/index.py`,
               },
             },
           ],
@@ -150,7 +142,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'sensors',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.6',
+          ComponentVersion: '1.0.23',
           Manifests: [
             {
               Platform: {
@@ -174,16 +166,8 @@ export class GreenGrassStack extends NestedStack {
                   MODBUS_SLAVE_ADDRESS: '1',
                   MODBUS_READING_INTERVAL: '1',
                 },
-                // RequiresPrivilege: true,
-                // install: 'apt-get update\napt-get install python3.7',
-                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && pip3 install --break-system-packages -r requirements.txt`,
-                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && python3 -m venv ./.venv && source .venv/bin/activate && pip3 install -r requirements.txt`,
-                // install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && python3 -m venv venv && . venv/bin/activate && pip3 install wheel setuptools awscrt && pip3 install -r requirements.txt`,
-                // install: `echo '###### installing' && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${assetFolder} && python3 -m venv venv && ls && . venv/bin/activate`,
-                // install: `rm -rf * && cp -r {artifacts:decompressedPath}/* .`,
-                // run: `echo '###### running' && cd ${assetFolder} && . venv/bin/activate && python3 index.py`,
-                install: `echo '###### installing' && whoami && rm -rf * && cp -r {artifacts:decompressedPath}/* . && cd ${sensorAssetFolder}`,
-                run: `echo '###### running' && whoami && cd ${sensorAssetFolder} && python3 index.py`,
+                install: `echo '###### installing' && python3 -m venv venv && . venv/bin/activate && pip install -r {artifacts:decompressedPath}/${sensorAssetFolder}/requirements.txt`,
+                run: `echo '###### running' && . venv/bin/activate && python3 {artifacts:decompressedPath}/${sensorAssetFolder}/index.py`,
               },
             },
           ],
@@ -198,15 +182,6 @@ export class GreenGrassStack extends NestedStack {
       'aws.greengrass.TokenExchangeService': {
         componentVersion: '2.0.3',
       },
-      // 'aws.greengrass.Cli': {
-      //   componentVersion: '2.12.0',
-      // },
-      // 'aws.greengrass.clientdevices.mqtt.Moquette': {
-      //   componentVersion: '2.3.5',
-      // },
-      // 'aws.greengrass.clientdevices.mqtt.EMQX': {
-      //   componentVersion: '2.0.0',
-      // },
       'aws.greengrass.StreamManager': {
         componentVersion: '2.1.11',
       },
@@ -237,44 +212,6 @@ export class GreenGrassStack extends NestedStack {
       },
       'aws.greengrass.clientdevices.mqtt.Bridge': {
         componentVersion: '2.3.0',
-        configurationUpdate: {
-          merge: JSON.stringify({
-            // mqttTopicMapping: {
-            //   ClientDeviceHelloWorld: {
-            //     topic: 'clients/+/hello/world',
-            //     source: 'LocalMqtt',
-            //     target: 'IotCore',
-            //   },
-            //   ClientDeviceEvents: {
-            //     topic: 'clients/+/detections',
-            //     targetTopicPrefix: 'events/input/',
-            //     source: 'LocalMqtt',
-            //     target: 'Pubsub',
-            //   },
-            //   ClientDeviceCloudStatusUpdate: {
-            //     topic: 'clients/+/status',
-            //     targetTopicPrefix: '$aws/rules/StatusUpdateRule/',
-            //     source: 'LocalMqtt',
-            //     target: 'IotCore',
-            //   },
-            // },
-            // mqttTopicMapping: {
-            //   ClientDeviceHelloWorld: {
-            //     topic: 'clients/+/hello/world',
-            //     source: 'LocalMqtt',
-            //     target: 'IotCore',
-            //   },
-            // },
-            // mqtt5RouteOptions: {
-            //   ClientDeviceHelloWorld: {
-            //     retainAsPublished: true,
-            //   },
-            // },
-            // mqtt: {
-            //   version: 'mqtt5',
-            // },
-          }),
-        },
       },
       'aws.greengrass.ShadowManager': {
         componentVersion: '2.3.5',
