@@ -111,7 +111,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'predict',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.10',
+          ComponentVersion: '1.0.11',
           Manifests: [
             {
               Platform: {
@@ -142,7 +142,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'sensors',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.23',
+          ComponentVersion: '1.0.24',
           Manifests: [
             {
               Platform: {

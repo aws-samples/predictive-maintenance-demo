@@ -1,6 +1,8 @@
 import { Stack, StackProps, aws_iot, CfnOutput, Names } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { GreenGrassStack } from './greengrass/greengrass-stack';
+import { TimeStream } from './time-stream';
+import { Grafana } from './grafana/grafana';
 
 export class PredictiveMaintenanceDemoStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -17,6 +19,17 @@ export class PredictiveMaintenanceDemoStack extends Stack {
     const { subscribeCommand } = new GreenGrassStack(this, 'GreenGrassStack', {
       thing,
       thingGroup,
+    });
+
+    const { database, table } = new TimeStream(this, 'TimeStream');
+
+    const grafana = new Grafana(this, 'Grafana', {
+      timestream: { database, table },
+    });
+
+    new CfnOutput(this, 'GrafanaUrl', {
+      description: 'Grafana Url',
+      value: 'https://' + grafana.url,
     });
 
     new CfnOutput(this, 'GreenGrassSubscribeCommand', {
