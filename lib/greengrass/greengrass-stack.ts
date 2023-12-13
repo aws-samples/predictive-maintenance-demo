@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { NestedStack, NestedStackProps, aws_greengrassv2, aws_s3_assets, aws_iam, aws_iot, aws_s3 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
@@ -15,18 +18,17 @@ export class GreenGrassStack extends NestedStack {
     const role = new aws_iam.Role(this, 'GreengrassRole', {
       assumedBy: new aws_iam.ServicePrincipal('credentials.iot.amazonaws.com'),
       managedPolicies: [
-        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
-        // aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'),
-        // aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
-        //   'service-role/AWSAppRunnerServicePolicyForECRAccess'
-        // ),
+        // aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
+        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'),
+        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSAppRunnerServicePolicyForECRAccess'),
       ],
     });
 
     const serviceRole = new aws_iam.Role(this, 'GreengrassServiceRole', {
       assumedBy: new aws_iam.ServicePrincipal('greengrass.amazonaws.com'),
-      managedPolicies: [aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
+      // managedPolicies: [aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
+
     // const serviceRole = new aws_iam.CfnServiceLinkedRole(this, 'GreengrassServiceRole', {
     //   awsServiceName: 'greengrass.amazonaws.com',
     // });
@@ -37,14 +39,14 @@ export class GreenGrassStack extends NestedStack {
       statements: [
         new aws_iam.PolicyStatement({
           actions: [
-            '*',
-            // 'logs:CreateLogGroup',
-            // 'logs:CreateLogStream',
-            // 'logs:PutLogEvents',
-            // 'logs:DescribeLogStreams',
-            // 'iot:GetThingShadow',
-            // 'iot:UpdateThingShadow',
-            // 'iot:DeleteThingShadow',
+            // '*',
+            'logs:CreateLogGroup',
+            'logs:CreateLogStream',
+            'logs:PutLogEvents',
+            'logs:DescribeLogStreams',
+            'iot:GetThingShadow',
+            'iot:UpdateThingShadow',
+            'iot:DeleteThingShadow',
           ],
           resources: ['*'],
         }),
@@ -58,7 +60,8 @@ export class GreenGrassStack extends NestedStack {
         Statement: [
           {
             Effect: 'Allow',
-            Action: ['*'],
+            // Action: ['*'],
+            Action: ['iot:*', 'greengrass:*'],
             Resource: '*',
           },
         ],
@@ -72,7 +75,8 @@ export class GreenGrassStack extends NestedStack {
         Statement: [
           {
             Effect: 'Allow',
-            Action: ['*'],
+            // Action: ['*'],
+            Action: ['iot:*', 'greengrass:*'],
             Resource: '*',
           },
         ],

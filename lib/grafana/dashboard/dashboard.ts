@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { Construct } from 'constructs';
 import { aws_secretsmanager, CustomResource, custom_resources, aws_lambda_nodejs } from 'aws-cdk-lib';
 import generatePayload from './generatePayload';

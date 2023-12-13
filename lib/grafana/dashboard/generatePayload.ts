@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 type Config = {
   datasourceId: string;
   database: string;
@@ -82,8 +85,7 @@ export default (config: Config) => ({
               id: config.datasourceId,
             },
             measure: 'RUL',
-            rawQuery:
-              "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'RUL' ORDER BY time DESC LIMIT 1",
+            rawQuery: "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'RUL' ORDER BY time DESC LIMIT 1",
             refId: 'A',
             table: config.table,
           },
@@ -142,8 +144,7 @@ export default (config: Config) => ({
               id: config.datasourceId,
             },
             measure: 'RUL',
-            rawQuery:
-              "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'zrmsvelocity' ORDER BY time DESC LIMIT 1",
+            rawQuery: "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'zrmsvelocity' ORDER BY time DESC LIMIT 1",
             refId: 'A',
             table: config.table,
           },
@@ -202,8 +203,7 @@ export default (config: Config) => ({
               id: config.datasourceId,
             },
             measure: 'RUL',
-            rawQuery:
-              "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'temperature' ORDER BY time DESC LIMIT 1",
+            rawQuery: "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'temperature' ORDER BY time DESC LIMIT 1",
             refId: 'A',
             table: config.table,
           },
@@ -262,8 +262,7 @@ export default (config: Config) => ({
               id: config.datasourceId,
             },
             measure: 'RUL',
-            rawQuery:
-              "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'zpeakacceleration' ORDER BY time DESC LIMIT 1",
+            rawQuery: "SELECT measure_value::double FROM $__database.$__table WHERE measure_name = 'zpeakacceleration' ORDER BY time DESC LIMIT 1",
             refId: 'A',
             table: config.table,
           },

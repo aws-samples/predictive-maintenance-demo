@@ -1,11 +1,8 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { Construct } from 'constructs';
-import {
-  Stack,
-  CustomResource,
-  custom_resources,
-  aws_lambda_nodejs,
-  aws_secretsmanager,
-} from 'aws-cdk-lib';
+import { Stack, CustomResource, custom_resources, aws_lambda_nodejs, aws_secretsmanager } from 'aws-cdk-lib';
 import generatePayload from './generatePayload';
 
 type TimeStreamDataSourceProps = {

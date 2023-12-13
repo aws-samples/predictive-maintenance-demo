@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { Construct } from 'constructs';
 import { Names, aws_timestream, aws_iot, aws_iam } from 'aws-cdk-lib';
 
@@ -19,9 +22,7 @@ export class TimeStream extends Construct {
 
     const timeStreamAccessRole = new aws_iam.Role(this, 'topicIotTimeStreamRole', {
       assumedBy: new aws_iam.ServicePrincipal('iot.amazonaws.com'),
-      managedPolicies: [
-        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonTimestreamFullAccess'),
-      ],
+      managedPolicies: [aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonTimestreamFullAccess')],
     });
 
     const topicRule = new aws_iot.CfnTopicRule(this, 'TopicRule', {

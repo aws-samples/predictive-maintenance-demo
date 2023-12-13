@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { Construct } from 'constructs';
 import { aws_grafana, Duration, aws_iam, aws_secretsmanager, aws_lambda_nodejs } from 'aws-cdk-lib';
 import { TimeStreamDataSource } from './datasource/datasource';
@@ -16,9 +19,7 @@ export class Grafana extends Construct {
 
     const role = new aws_iam.Role(this, 'WorkspaceRole', {
       assumedBy: new aws_iam.ServicePrincipal('grafana.amazonaws.com'),
-      managedPolicies: [
-        aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonTimestreamReadOnlyAccess'),
-      ],
+      managedPolicies: [aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonTimestreamReadOnlyAccess')],
     });
 
     const workspace = new aws_grafana.CfnWorkspace(this, 'Workspace', {
@@ -37,9 +38,7 @@ export class Grafana extends Construct {
     });
     rotationFn.grantInvoke(new aws_iam.ServicePrincipal('secretsmanager.amazonaws.com'));
     apiKeySecret.grantWrite(rotationFn);
-    rotationFn.role?.addManagedPolicy(
-      aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AWSGrafanaAccountAdministrator')
-    );
+    rotationFn.role?.addManagedPolicy(aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AWSGrafanaAccountAdministrator'));
 
     apiKeySecret.addRotationSchedule('RotationSchedule', {
       rotationLambda: rotationFn,

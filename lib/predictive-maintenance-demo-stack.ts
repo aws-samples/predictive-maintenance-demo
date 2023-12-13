@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { Construct } from 'constructs';
 import { Stack, StackProps, aws_iot, CfnOutput, Names } from 'aws-cdk-lib';
 import { GreenGrassStack } from './greengrass/greengrass-stack';

@@ -1,3 +1,6 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: MIT-0
+
 import { SecretsManager, Grafana } from 'aws-sdk';
 
 const secretName = process.env.SECRET_NAME!;
