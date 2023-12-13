@@ -1,12 +1,5 @@
 import { Construct } from 'constructs';
-import { readFileSync } from 'fs';
-import { parse } from 'yaml';
-import {
-  aws_secretsmanager,
-  CustomResource,
-  custom_resources,
-  aws_lambda_nodejs,
-} from 'aws-cdk-lib';
+import { aws_secretsmanager, CustomResource, custom_resources, aws_lambda_nodejs } from 'aws-cdk-lib';
 import generatePayload from './generatePayload';
 
 type DashboardProps = {

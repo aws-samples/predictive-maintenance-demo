@@ -1,16 +1,10 @@
-import {
-  NestedStack,
-  NestedStackProps,
-  aws_greengrassv2,
-  aws_s3_assets,
-  aws_iam,
-  aws_iot,
-} from 'aws-cdk-lib';
+import { NestedStack, NestedStackProps, aws_greengrassv2, aws_s3_assets, aws_iam, aws_iot, aws_s3 } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 
 interface GreenGrassStackProps extends NestedStackProps {
   thing: aws_iot.CfnThing;
   thingGroup: aws_iot.CfnThingGroup;
+  mlBucket: aws_s3.IBucket;
 }
 
 export class GreenGrassStack extends NestedStack {
@@ -111,7 +105,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'predict',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.11',
+          ComponentVersion: '1.0.29',
           Manifests: [
             {
               Platform: {
@@ -122,9 +116,13 @@ export class GreenGrassStack extends NestedStack {
                   URI: predictAsset.s3ObjectUrl,
                   Unarchive: 'ZIP',
                 },
+                {
+                  URI: props.mlBucket.s3UrlForObject('models/LSTM.h5'),
+                },
               ],
               Lifecycle: {
                 Setenv: {
+                  MODEL_PATH: '{artifacts:path}/LSTM.h5',
                   GREENGRASS_GROUP_ID: props.thingGroup.attrId,
                   GREENGRASS_GROUP_NAME: props.thingGroup.thingGroupName,
                   GREENGRASS_THING_NAME: props.thing.thingName,
@@ -263,10 +261,7 @@ export class GreenGrassStack extends NestedStack {
               'aws.greengrass.ipc.mqttproxy': {
                 [`${name}:mqttproxy:1`]: {
                   policyDescription: 'Allows access to publish/subscribe to all topics.',
-                  operations: [
-                    'aws.greengrass#PublishToIoTCore',
-                    'aws.greengrass#SubscribeToIoTCore',
-                  ],
+                  operations: ['aws.greengrass#PublishToIoTCore', 'aws.greengrass#SubscribeToIoTCore'],
                   resources: ['*'],
                 },
               },
@@ -285,9 +280,9 @@ export class GreenGrassStack extends NestedStack {
       this.region
     } --thing-name ${props.thing.thingName} --thing-group-name ${
       props.thingGroup.thingGroupName
-    } --component-default-user ggc_user:ggc_group --provision true --thing-policy-name ${
-      iotPolicy.policyName
-    } --tes-role-name ${role.roleName} --tes-role-alias-name ${
+    } --component-default-user ggc_user:ggc_group --provision true --thing-policy-name ${iotPolicy.policyName} --tes-role-name ${
+      role.roleName
+    } --tes-role-alias-name ${
       role.roleName + 'Alias'
       // roleAlias.roleAlias
     } --setup-system-service true --deploy-dev-tools true`;

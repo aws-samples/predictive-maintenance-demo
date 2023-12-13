@@ -54,7 +54,7 @@ PREDICTION_TOPIC = "prediction/" + GREENGRASS_THING_NAME
 
 PREDICTION_STREAM_NAME = os.environ["PREDICTION_STREAM_NAME"]
 
-MODEL_FILE = os.path.join(os.path.dirname(__file__), "model/LSTM.h5")
+MODEL_PATH = os.environ["MODEL_PATH"]
 
 TIMEOUT = 10
 
@@ -197,7 +197,7 @@ def predict_rul():
                     except:
                         logger.exception("Prediction Exception")
 
-                except NotEnoughMessagesException as e:
+                except e:
                     logger.info(
                         "Not Enough Messages ("
                         + str(last_read_seq_num)
@@ -217,7 +217,7 @@ def predict_rul():
         time.sleep(1)
 
 
-model = load_model(MODEL_FILE)
+model = load_model(MODEL_PATH)
 
 thread2 = threading.Thread(target=predict_rul)
 thread2.start()
