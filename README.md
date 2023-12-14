@@ -1,5 +1,7 @@
 # Predictive Maintenance Demonstrator
 
+A predictive maintenance demo using the motor setup below to predict failures before they happen, using data and machine learning. It gathers data from sensors, uses advanced algorithms to forecast problems, and provides actionable insights through visualizations. Ultimately, it shows how predictive maintenance can prevent breakdowns and optimize equipment performance.
+
 ![demo](./doc/images/demo.png)
 
 ## Architecture
