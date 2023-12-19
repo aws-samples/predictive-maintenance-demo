@@ -18,7 +18,7 @@ export class MlStack extends NestedStack {
     });
 
     const deployment = new aws_s3_deployment.BucketDeployment(this, 'DeployModel', {
-      sources: [aws_s3_deployment.Source.asset('lib/ml/models.zip')],
+      sources: [aws_s3_deployment.Source.asset('lib/ml/models')],
       destinationBucket: bucket,
       retainOnDelete: false,
     });
