@@ -21,7 +21,7 @@ The project is built using CDK IaC. So it can be deployed to your AWS account wi
 
   ```
   npm ci
-  npm run cdk bootstrap -- --toolkit-stack-name CDKToolkit-Water-Tank --qualifier watertank
+  npm run cdk bootstrap -- --toolkit-stack-name Predictive-Maintenance --qualifier predmaint
   ```
 
   ### Follow steps below:
