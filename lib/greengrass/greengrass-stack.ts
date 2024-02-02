@@ -121,7 +121,7 @@ export class GreenGrassStack extends NestedStack {
                   Unarchive: 'ZIP',
                 },
                 {
-                  URI: props.mlBucket.s3UrlForObject('models/LSTM.h5'),
+                  URI: props.mlBucket.s3UrlForObject('LSTM.h5'),
                 },
               ],
               Lifecycle: {
