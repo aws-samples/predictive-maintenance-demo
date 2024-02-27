@@ -7,7 +7,6 @@ import { Construct } from 'constructs';
 interface GreenGrassStackProps extends NestedStackProps {
   thing: aws_iot.CfnThing;
   thingGroup: aws_iot.CfnThingGroup;
-  mlBucket: aws_s3.IBucket;
 }
 
 export class GreenGrassStack extends NestedStack {
@@ -15,10 +14,13 @@ export class GreenGrassStack extends NestedStack {
   constructor(scope: Construct, id: string, props: GreenGrassStackProps) {
     super(scope, id, props);
 
+    const mlBucketPath = this.node.tryGetContext('mlBucketPath');
+    const predictComponentVersion = this.node.tryGetContext('predictComponentVersion');
+    const sensorsComponentVersion = this.node.tryGetContext('sensorsComponentVersion');
+
     const role = new aws_iam.Role(this, 'GreengrassRole', {
       assumedBy: new aws_iam.ServicePrincipal('credentials.iot.amazonaws.com'),
       managedPolicies: [
-        // aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess'),
         aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonS3ReadOnlyAccess'),
         aws_iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSAppRunnerServicePolicyForECRAccess'),
       ],
@@ -26,12 +28,7 @@ export class GreenGrassStack extends NestedStack {
 
     const serviceRole = new aws_iam.Role(this, 'GreengrassServiceRole', {
       assumedBy: new aws_iam.ServicePrincipal('greengrass.amazonaws.com'),
-      // managedPolicies: [aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AdministratorAccess')],
     });
-
-    // const serviceRole = new aws_iam.CfnServiceLinkedRole(this, 'GreengrassServiceRole', {
-    //   awsServiceName: 'greengrass.amazonaws.com',
-    // });
 
     const policy = new aws_iam.ManagedPolicy(this, 'GreenGrassPolicy', {
       managedPolicyName: role.roleName + 'Access',
@@ -39,7 +36,6 @@ export class GreenGrassStack extends NestedStack {
       statements: [
         new aws_iam.PolicyStatement({
           actions: [
-            // '*',
             'logs:CreateLogGroup',
             'logs:CreateLogStream',
             'logs:PutLogEvents',
@@ -60,7 +56,6 @@ export class GreenGrassStack extends NestedStack {
         Statement: [
           {
             Effect: 'Allow',
-            // Action: ['*'],
             Action: ['iot:*', 'greengrass:*'],
             Resource: '*',
           },
@@ -75,7 +70,6 @@ export class GreenGrassStack extends NestedStack {
         Statement: [
           {
             Effect: 'Allow',
-            // Action: ['*'],
             Action: ['iot:*', 'greengrass:*'],
             Resource: '*',
           },
@@ -109,7 +103,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'predict',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.47',
+          ComponentVersion: predictComponentVersion,
           Manifests: [
             {
               Platform: {
@@ -120,13 +114,11 @@ export class GreenGrassStack extends NestedStack {
                   URI: predictAsset.s3ObjectUrl,
                   Unarchive: 'ZIP',
                 },
-                {
-                  URI: props.mlBucket.s3UrlForObject('LSTM.h5'),
-                },
+                { URI: mlBucketPath },
               ],
               Lifecycle: {
                 Setenv: {
-                  MODEL_PATH: '{artifacts:path}/LSTM.h5',
+                  MODEL_PATH: `{artifacts:path}/${mlBucketPath.split('/').pop()}`,
                   GREENGRASS_GROUP_ID: props.thingGroup.attrId,
                   GREENGRASS_GROUP_NAME: props.thingGroup.thingGroupName,
                   GREENGRASS_THING_NAME: props.thing.thingName,
@@ -145,7 +137,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'sensors',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.43',
+          ComponentVersion: sensorsComponentVersion,
           Manifests: [
             {
               Platform: {
@@ -287,9 +279,6 @@ export class GreenGrassStack extends NestedStack {
       props.thingGroup.thingGroupName
     } --component-default-user ggc_user:ggc_group --provision true --thing-policy-name ${iotPolicy.policyName} --tes-role-name ${
       role.roleName
-    } --tes-role-alias-name ${
-      role.roleName + 'Alias'
-      // roleAlias.roleAlias
-    } --setup-system-service true --deploy-dev-tools true`;
+    } --tes-role-alias-name ${role.roleName + 'Alias'} --setup-system-service true --deploy-dev-tools true`;
   }
 }

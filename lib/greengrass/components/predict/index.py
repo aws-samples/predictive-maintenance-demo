@@ -240,10 +240,7 @@ def predict_rul():
         time.sleep(1)
 
 
-try:
-    model = load_model(MODEL_PATH)
-except:
-    logger.error("No Model Available, Please Upload a Prediction Model")
+model = load_model(MODEL_PATH)
 
 thread2 = threading.Thread(target=predict_rul)
 thread2.start()

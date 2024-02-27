@@ -6,13 +6,10 @@ import { Stack, StackProps, aws_iot, CfnOutput, Names } from 'aws-cdk-lib';
 import { GreenGrassStack } from './greengrass/greengrass-stack';
 import { TimeStream } from './time-stream';
 import { Grafana } from './grafana/grafana';
-import { MlStack } from './ml/ml-stack';
 
 export class PredictiveMaintenanceDemoStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
-
-    const { mlBucket } = new MlStack(this, 'MlStack');
 
     const thingGroup = new aws_iot.CfnThingGroup(this, 'DemoThingGroup', {
       thingGroupName: Names.uniqueResourceName(this, {}) + '-Group',
@@ -25,7 +22,6 @@ export class PredictiveMaintenanceDemoStack extends Stack {
     const { subscribeCommand } = new GreenGrassStack(this, 'GreenGrassStack', {
       thing,
       thingGroup,
-      mlBucket,
     });
 
     const { database, table } = new TimeStream(this, 'TimeStream');
