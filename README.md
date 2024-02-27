@@ -24,10 +24,18 @@ The project is built using CDK IaC. So it can be deployed to your AWS account wi
   npm run cdk bootstrap -- --toolkit-stack-name CDKToolkit-Predictive-Maintenance --qualifier predmaint
   ```
 
-  ### Follow steps below:
+### Generate Ml Model:
+
+1. Run the Jupiter NoteBook located in [lib/ml](./lib/ml) to train the model with the example dataset provided. Feel free to run locally if you have a Jupiter instance or use a Notebook Instance in your AWS account (Guide [here](https://docs.aws.amazon.com/sagemaker/latest/dg/gs-console.html)).
+1. After you finish running the notebook a trained model is created by the default name `lstm.h5`
+1. Go to your AWS account, create a s3 bucket and upload the model
+1. keep note of bucket name and filename, as we will pass that to the cdk code later.
+
+### Follow steps below:
 
 1. Clone this repo.
 1. in your AWS Account [enable AWS IAM Identity Center and create a user for yourself](https://console.aws.amazon.com/singlesignon/identity/home)
+1. Go to [ckd.json](./cdk.json) and update the `mlBucketPath` field with your ml bucket details you created earlier.
 1. In the root folder, run the following commands
    ```
    npm run deploy
@@ -53,15 +61,20 @@ This steps assume you have an SD Card and Raspberry PI
 1. Connect to your Raspberry Pi:
    1. Start your Raspberry Pi with SD Card plugged in it
    1. SSH to it by connecting your PC to the network you set up in the previous steps (`ssh pi@raspberrypi.local`)
-1. Install the missing dependencies:
+1. Setup up Raspberry Pi:
+   1. Configure the interface options:
+      1. run `raspi-config`
+      1. Go to Interface options
+      1. Enable I4, I5, I6 (enable Hardware Serial port only, not login shell), I7 and I8
+      1. Reboot your PI !
    1. Install Java and pip3 using apt
       ```
       sudo apt-get update
       sudo apt-get install default-jre python3-pip docker.io
       ```
-   1. Create ggc_user and give it permission to run docker commands
+   1. Create ggc_user and give it permission to access serial port and GPIO
       ```
-      sudo useradd ggc_user && sudo groupadd ggc_group && sudo usermod -aG ggc_group ggc_user && sudo usermod -aG docker ggc_user
+      useradd ggc_user && sudo groupadd ggc_group && sudo usermod -aG ggc_group ggc_user && sudo usermod -a -G dialout ggc_user && sudo usermod -a -G gpio ggc_user
       ```
    1. Install Greengrass running the following command
       ```
@@ -75,13 +88,8 @@ This steps assume you have an SD Card and Raspberry PI
          export AWS_SESSION_TOKEN=<AWS_SESSION_TOKEN>
          ```
       1. Run the command given as output of your backend deployment (aka. `npm run deploy`). Something like `sudo -E java -Droot="/greengrass/v2" ...`
-1. Configure the interface options:
-   1. run `raspi-config`
-   1. Go to Interface options
-   1. Enable I4, I5, I6 (enable Hardware Serial port only, not login shell), I7 and I8
-   1. Reboot your PI !
-1. Check the PI is registered to your account:
-   1. Go to AWS IOT Core console > Greengrass devices > Core devices > `watertank_01` > Deployments
+1. Check the device is registered in your account:
+   1. Go to AWS IOT Core console > Greengrass devices > Core devices > `PredictiveMaintenanceDemoStack-Thing` > Deployments
    1. Check the deployments are `Completed`
 
 You are all set !
@@ -106,6 +114,10 @@ Now you are ready to visit grafana dashboard.ra
 1. Visit the dashboard section, choose browse and you can view the dashboard created by our deployment as seen below.
 
    ![grafana dashboard](./doc/images/grafana.png)
+
+## Greengrass component changes
+
+To deploy any changes in greengrass components, make sure you upgrade the componenent version in [cdk.json](./cdk.json), before running `npm run deploy` again
 
 ## Clean up
 
