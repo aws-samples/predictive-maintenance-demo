@@ -19,6 +19,7 @@ from stream_manager import (
 import awsiot.greengrasscoreipc
 from awsiot.greengrasscoreipc.model import GetThingShadowRequest
 
+from gpiozero import LED
 
 # TFLite does not support LSTM yet
 # TODO: Replace Keras with TFLite for better performance once it's supported
@@ -61,6 +62,10 @@ MODEL_PATH = os.environ["MODEL_PATH"]
 
 TIMEOUT = 10
 
+LED_PIN = 25  # GPIO25
+alarm_led = LED(LED_PIN)
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
 
@@ -68,6 +73,20 @@ logger = logging.getLogger()
 ggclient = GreengrassCoreIPCClientV2()
 streamclient = StreamManagerClient()
 ipc_client_v1 = awsiot.greengrasscoreipc.connect()
+
+
+def turn_on_alarm():
+    global alarm_led
+
+    logger.info("Turn on the alarm LED")
+    alarm_led.on()
+
+
+def turn_off_alarm():
+    global alarm_led
+
+    logger.info("Turn off the alarm LED")
+    alarm_led.off()
 
 
 def sample_get_thing_shadow_request(thingName, shadowName):
@@ -114,6 +133,7 @@ def get_shadow_reported_status():
 def predict_rul():
     global model
     last_read_seq_num = 0
+    turn_on_alarm()
 
     while True:
         try:
@@ -220,7 +240,10 @@ def predict_rul():
         time.sleep(1)
 
 
-model = load_model(MODEL_PATH)
+try:
+    model = load_model(MODEL_PATH)
+except:
+    logger.error("No Model Available, Please Upload a Prediction Model")
 
 thread2 = threading.Thread(target=predict_rul)
 thread2.start()

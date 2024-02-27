@@ -194,8 +194,9 @@ def read_registers():
                 signed=v["signed"],
             )
             data[k] = reading
-        except:
+        except Exception as e:
             logger.error("Error reading " + k)
+            logger.error(e)
     data["timestamp"] = round(time.time() * 1000)
 
     logger.info(

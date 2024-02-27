@@ -3,3 +3,4 @@ stream_manager
 tensorflow
 numpy
 keras
+gpiozero

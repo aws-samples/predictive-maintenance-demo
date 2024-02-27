@@ -109,7 +109,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'predict',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.29',
+          ComponentVersion: '1.0.47',
           Manifests: [
             {
               Platform: {
@@ -131,6 +131,7 @@ export class GreenGrassStack extends NestedStack {
                   GREENGRASS_GROUP_NAME: props.thingGroup.thingGroupName,
                   GREENGRASS_THING_NAME: props.thing.thingName,
                   PREDICTION_STREAM_NAME: 'LocalRawData',
+                  GPIOZERO_PIN_FACTORY: 'native',
                 },
                 install: `echo '###### installing' && python3 -m venv venv && . venv/bin/activate && pip install -r {artifacts:decompressedPath}/${predictAssetFolder}/requirements.txt`,
                 run: `echo '###### running' && . venv/bin/activate && python3 {artifacts:decompressedPath}/${predictAssetFolder}/index.py`,
@@ -144,7 +145,7 @@ export class GreenGrassStack extends NestedStack {
           RecipeFormatVersion: '2020-01-25',
           ComponentName: 'sensors',
           ComponentPublisher: 'Amazon Web Services',
-          ComponentVersion: '1.0.24',
+          ComponentVersion: '1.0.43',
           Manifests: [
             {
               Platform: {
