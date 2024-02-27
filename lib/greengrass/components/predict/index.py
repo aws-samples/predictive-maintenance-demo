@@ -6,6 +6,7 @@ import time
 import json
 import logging
 import threading
+import math
 
 import numpy as np
 from keras.models import load_model
@@ -175,9 +176,10 @@ def predict_rul():
 
                         # predict
                         prediction = model.predict(inputs_shaped)
+                        rul = prediction[0][0]
                         output = {
                             "timestamp": round(time.time() * 1000),
-                            "RUL": prediction[0][0],
+                            "RUL": rul,
                             # TODO: raw data should be published by ReadSensor Lambda to a separate topic
                             # this is only the last reading of NUM_STEPS messages
                             "pH": last_message_in_batch["zrmsvelocity"],  # tmp
@@ -213,10 +215,14 @@ def predict_rul():
                                 "xhfrmsacceleration"
                             ],
                         }
-                        logger.info("Prediction: {}s".format(prediction[0][0]))
+                        logger.info("Prediction: {}s".format(rul))
                         publish(
                             PREDICTION_TOPIC, json.dumps(output, default=json_converter)
                         )
+                        if math.floor(rul) <= 0:
+                            turn_on_alarm()
+                        else:
+                            turn_off_alarm()
                     except:
                         logger.exception("Prediction Exception")
 
