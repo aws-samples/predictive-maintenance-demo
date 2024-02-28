@@ -1,5 +1,3 @@
-// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-// SPDX-License-Identifier: MIT-0
 
 int outPin = 9;
 int inPin = 2;
@@ -14,8 +12,7 @@ int sinMap(double val)
 void triggerPattern()
 {
   int step = 100;
-  // int pattern = random(6);
-  int pattern = 0;
+  int pattern = random(6);
   analogWrite(outPin, 0);
 
   switch (pattern)

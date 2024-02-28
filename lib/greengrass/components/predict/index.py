@@ -76,20 +76,6 @@ streamclient = StreamManagerClient()
 ipc_client_v1 = awsiot.greengrasscoreipc.connect()
 
 
-def turn_on_alarm():
-    global alarm_led
-
-    logger.info("Turn on the alarm LED")
-    alarm_led.on()
-
-
-def turn_off_alarm():
-    global alarm_led
-
-    logger.info("Turn off the alarm LED")
-    alarm_led.off()
-
-
 def sample_get_thing_shadow_request(thingName, shadowName):
     try:
         get_thing_shadow_request = GetThingShadowRequest()
@@ -134,7 +120,6 @@ def get_shadow_reported_status():
 def predict_rul():
     global model
     last_read_seq_num = 0
-    turn_on_alarm()
 
     while True:
         try:
@@ -219,14 +204,16 @@ def predict_rul():
                         publish(
                             PREDICTION_TOPIC, json.dumps(output, default=json_converter)
                         )
-                        if math.floor(rul) <= 0:
-                            turn_on_alarm()
+                        if math.floor(rul) <= 50:
+                            alarm_led.on()
                         else:
-                            turn_off_alarm()
+                            alarm_led.off()
                     except:
+                        logger.exception("========= 1 ===========")
                         logger.exception("Prediction Exception")
 
                 except e:
+                    logger.exception("========= 2 ===========")
                     logger.info(
                         "Not Enough Messages ("
                         + str(last_read_seq_num)
@@ -234,6 +221,7 @@ def predict_rul():
                         + repr(e)
                     )
                 except Exception as e:
+                    logger.exception("========= 3 ===========")
                     logger.exception("Read Messages Exception: " + repr(e))
 
             else:
