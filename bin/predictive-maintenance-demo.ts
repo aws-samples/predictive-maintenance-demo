@@ -26,4 +26,4 @@ const app = new cdk.App({
   ],
 });
 
-new PredictiveMaintenanceDemoStack(app, 'PredictiveMaintenanceDemoStack', {});
+new PredictiveMaintenanceDemoStack(app, 'PredictiveMaintenanceDemoStack', { description: 'Predictive Maintenance Demo (uksb-1tupboc56)' });
