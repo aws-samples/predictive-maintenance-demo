@@ -8,6 +8,10 @@ A predictive maintenance demo using a speed controlled motor setup to predict fa
 
 ![architecture](./doc/images/architecture.png)
 
+## Building
+
+To build the physical demo, please take a look go to [BuildSpec.md](./doc/BuildSpec.md) for list of materials.
+
 ## Deployment
 
 The project is built using CDK IaC. So it can be deployed to your AWS account with a single deploy command.
